@@ -9,12 +9,12 @@ class Chip8:
         self.V = [0x0] * 16
         self.I = 0x0
         
-    def load_rom(self, path) -> None:
+    def load_rom(self, path: str) -> None:
         with open(path, 'rb') as file:
             data = file.read()
         self.memory[PROGRAM_START: PROGRAM_START + len(data)] = data
     
-    def dump(self, start, count) -> None:
+    def dump(self, start: int, count: int) -> None:
         for addr in range(start, start + count, BYTES_PER_LINE):
             row = self.memory[addr : addr + BYTES_PER_LINE]
             hex_line = " ".join(f"{byte:02X}" for byte in row)
@@ -27,7 +27,7 @@ class Chip8:
         self.PC += OPCODE_SIZE
         return opcode
     
-    def decode(self, opcode):
+    def decode(self, opcode: int):
         # вернуть (kind, x, y, n, nn, nnn)
         ...
         
@@ -40,8 +40,8 @@ def main() -> None:
     
     for _ in range(10):
         addr = ch8.PC
-        op = ch8.fetch()
-        print(f"{addr:04X}: {op:04X}")
+        opcode = ch8.fetch()
+        print(f"{addr:04X}: {opcode:04X}")
     
 
 if __name__ == "__main__":
