@@ -4,6 +4,10 @@ PROGRAM_START = 0x200
 BYTES_PER_LINE = 16
 OPCODE_SIZE = 2
 
+# display resolution
+HEIGHT = 32
+WIDTH = 64
+
 class Instruction(NamedTuple):
     kind: int
     x: int
@@ -14,6 +18,7 @@ class Instruction(NamedTuple):
 
 class Chip8:
     def __init__(self) -> None:
+        self.display = bytearray(WIDTH * HEIGHT)
         self.memory = bytearray(4096)
         self.PC = PROGRAM_START
         self.V = [0x0] * 16
@@ -46,19 +51,53 @@ class Chip8:
             nn=opcode & 0xFF,
             nnn=opcode & 0xFFF,
         )
+    
+    def execute(self, ins: Instruction) -> None:
+        match ins.kind:
+            case 0x0 if ins.nn == 0xE0:
+                self.display = bytes(WIDTH * HEIGHT)
+                self.render() # turn off display
+            case 0x1:
+                self.PC = ins.nnn
+            case 0x6:
+                self.V[ins.x] = ins.nn
+            case 0x7:
+                self.V[ins.x] += ins.nn
+                # register overflow mechanism
+                # Vx is a 1-byte register that overflows
+                # when the value is greater than 0xFF
+                self.V[ins.x] & 0xFF  
+            case 0xA:
+                self.I = ins.nnn
+            case _:
+                opcode = (ins.kind << 12) | ins.nnn
+                raise ValueError(f"Unknown upcode: {opcode:04X}")
+        
+    def render(self) -> None:
+        for y in range(HEIGHT):
+            row = self.display[WIDTH * y: (y + 1) * WIDTH]
+            print("".join("#" if pixel else "."for pixel in row))
+    
+    def run(self, steps: int) -> None:
+        for _ in range(steps):
+            opcode = self.fetch()
+            instruction = self.decode(opcode)
+            self.execute(instruction)
         
     
 def main() -> None:
     ch8 = Chip8()
     ch8.load_rom("./logo.ch8")
-    ch8.dump(0x200, 15)
+    ch8.dump(ch8.PC, 100)
+    try:
+        ch8.run(steps=10)
+    except ValueError as e:
+        print(e)
         
-    for _ in range(10):
-        addr = ch8.PC
-        opcode = ch8.fetch()
-        ins = ch8.decode(opcode)
-        print(f"{addr:04X}: {opcode:04X}  kind={ins.kind:X} X={ins.x:X} Y={ins.y:X} N={ins.n:X} NN={ins.nn:02X} NNN={ins.nnn:03X}")
+    for i, v in enumerate(ch8.V):
+        print(f"V{i}={v:02X}", end=" ")
+    print(f"I={ch8.I:04X} PC={ch8.PC:04X}")
     
-
+    
 if __name__ == "__main__":
     main()
