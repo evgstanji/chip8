@@ -1,6 +1,16 @@
+from typing import NamedTuple
+
 PROGRAM_START = 0x200
 BYTES_PER_LINE = 16
 OPCODE_SIZE = 2
+
+class Instruction(NamedTuple):
+    kind: int
+    x: int
+    y: int
+    n: int
+    nn: int
+    nnn: int
 
 class Chip8:
     def __init__(self) -> None:
@@ -27,21 +37,27 @@ class Chip8:
         self.PC += OPCODE_SIZE
         return opcode
     
-    def decode(self, opcode: int):
-        # вернуть (kind, x, y, n, nn, nnn)
-        ...
-        
+    def decode(self, opcode: int) -> Instruction:
+        return Instruction(
+            kind=(opcode >> 12),
+            x=(opcode >> 8) & 0xF,
+            y=(opcode >> 4) & 0xF,
+            n=opcode & 0xF,
+            nn=opcode & 0xFF,
+            nnn=opcode & 0xFFF,
+        )
         
     
 def main() -> None:
     ch8 = Chip8()
     ch8.load_rom("./logo.ch8")
     ch8.dump(0x200, 15)
-    
+        
     for _ in range(10):
         addr = ch8.PC
         opcode = ch8.fetch()
-        print(f"{addr:04X}: {opcode:04X}")
+        ins = ch8.decode(opcode)
+        print(f"{addr:04X}: {opcode:04X}  kind={ins.kind:X} X={ins.x:X} Y={ins.y:X} N={ins.n:X} NN={ins.nn:02X} NNN={ins.nnn:03X}")
     
 
 if __name__ == "__main__":
