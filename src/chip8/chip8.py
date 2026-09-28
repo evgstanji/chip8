@@ -62,11 +62,7 @@ class Chip8:
             case 0x6:
                 self.V[ins.x] = ins.nn
             case 0x7:
-                self.V[ins.x] += ins.nn
-                # register overflow mechanism
-                # Vx is a 1-byte register that overflows
-                # when the value is greater than 0xFF
-                self.V[ins.x] & 0xFF  
+                self.V[ins.x] = (ins.nn + self.V[ins.x]) & 0xFF  
             case 0xA:
                 self.I = ins.nnn
             case _:
@@ -95,7 +91,7 @@ def main() -> None:
         print(e)
         
     for i, v in enumerate(ch8.V):
-        print(f"V{i}={v:02X}", end=" ")
+        print(f"V{i + 1}={v:02X}", end=" ")
     print(f"I={ch8.I:04X} PC={ch8.PC:04X}")
     
     
