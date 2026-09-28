@@ -55,8 +55,7 @@ class Chip8:
     def execute(self, ins: Instruction) -> None:
         match ins.kind:
             case 0x0 if ins.nn == 0xE0:
-                self.display = bytes(WIDTH * HEIGHT)
-                self.render() # turn off display
+                self.display[:] = bytes(WIDTH * HEIGHT)
             case 0x1:
                 self.PC = ins.nnn
             case 0x6:
@@ -67,12 +66,12 @@ class Chip8:
                 self.I = ins.nnn
             case _:
                 opcode = (ins.kind << 12) | ins.nnn
-                raise ValueError(f"Unknown upcode: {opcode:04X}")
+                raise ValueError(f"Unknown opcode: {opcode:04X}")
         
     def render(self) -> None:
         for y in range(HEIGHT):
             row = self.display[WIDTH * y: (y + 1) * WIDTH]
-            print("".join("#" if pixel else "."for pixel in row))
+            print("".join("#" if pixel else "." for pixel in row))
     
     def run(self, steps: int) -> None:
         for _ in range(steps):
@@ -91,9 +90,10 @@ def main() -> None:
         print(e)
         
     for i, v in enumerate(ch8.V):
-        print(f"V{i + 1}={v:02X}", end=" ")
+        print(f"V{i}={v:02X}", end=" ")
     print(f"I={ch8.I:04X} PC={ch8.PC:04X}")
     
+    ch8.render()
     
 if __name__ == "__main__":
     main()
