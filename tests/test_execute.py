@@ -15,3 +15,12 @@ def test_clear_screen_in_place() -> None:
     ch8.execute(ch8.decode(0x00E0))
     assert ch8.display is screen
     assert not any(screen)
+    
+def test_sys_call_does_not_clear_screen() -> None:
+    ch8 = Chip8()
+    ch8.display[5] = 1
+    with pytest.raises(ValueError):
+        ch8.execute(ch8.decode(0x01E0))
+    assert ch8.display[5] == 1
+    
+    
