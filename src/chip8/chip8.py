@@ -54,7 +54,7 @@ class Chip8:
     
     def execute(self, ins: Instruction) -> None:
         match ins.kind:
-            case 0x0 if ins.nn == 0xE0:
+            case 0x0 if ins.nnn == 0x0E0:
                 self.display[:] = bytes(WIDTH * HEIGHT)
             case 0x1:
                 self.PC = ins.nnn
