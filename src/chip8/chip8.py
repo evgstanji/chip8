@@ -90,7 +90,7 @@ def main() -> None:
         print(e)
         
     for i, v in enumerate(ch8.V):
-        print(f"V{i}={v:02X}", end=" ")
+        print(f"V{i:X}={v:02X}", end=" ")
     print(f"I={ch8.I:04X} PC={ch8.PC:04X}")
     
     ch8.render()
