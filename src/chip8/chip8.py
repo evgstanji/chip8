@@ -58,12 +58,29 @@ class Chip8:
                 self.display[:] = bytes(WIDTH * HEIGHT)
             case 0x1:
                 self.PC = ins.nnn
+            # 3XNN
+            case 0x3: 
+                if self.V[ins.x] == ins.nn:
+                    self.PC += OPCODE_SIZE
+            # 4XNN
+            case 0x4:
+                if self.V[ins.x] != ins.nn:
+                    self.PC += OPCODE_SIZE
+            # 5XY0
+            case 0x5 if ins.n == 0x0:
+                if self.V[ins.x] == self.V[ins.y]:
+                    self.PC += OPCODE_SIZE
             case 0x6:
                 self.V[ins.x] = ins.nn
             case 0x7:
                 self.V[ins.x] = (ins.nn + self.V[ins.x]) & 0xFF  
+            # 9XY0
+            case 0x9 if ins.n == 0x0:
+                if self.V[ins.x] != self.V[ins.y]:
+                    self.PC += OPCODE_SIZE
             case 0xA:
                 self.I = ins.nnn
+            #DXYN
             case 0xD:
                 x0 = self.V[ins.x] % WIDTH      
                 y0 = self.V[ins.y] % HEIGHT
@@ -94,10 +111,10 @@ class Chip8:
     
 def main() -> None:
     ch8 = Chip8()
-    ch8.load_rom("./logo.ch8")
+    ch8.load_rom("./roms/3-corax+.ch8")
     ch8.dump(ch8.PC, 100)
     try:
-        ch8.run(steps=100)
+        ch8.run(steps=2000)
     except ValueError as e:
         print(e)
         
