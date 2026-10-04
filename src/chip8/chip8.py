@@ -64,6 +64,18 @@ class Chip8:
                 self.V[ins.x] = (ins.nn + self.V[ins.x]) & 0xFF  
             case 0xA:
                 self.I = ins.nnn
+            case 0xD:
+                x0 = self.V[ins.x] % WIDTH      
+                y0 = self.V[ins.y] % HEIGHT
+                for row in range(ins.n):
+                    sprite_byte = self.memory[self.I + row]           
+                    for col in range(8):
+                        bit = (sprite_byte >> (7 - col)) & 1               
+                        x = x0 + col
+                        y = y0 + row
+                        if x >= WIDTH or y >= HEIGHT:
+                            continue            
+                        self.display[y * WIDTH + x] ^= bit
             case _:
                 opcode = (ins.kind << 12) | ins.nnn
                 raise ValueError(f"Unknown opcode: {opcode:04X}")
@@ -71,7 +83,7 @@ class Chip8:
     def render(self) -> None:
         for y in range(HEIGHT):
             row = self.display[WIDTH * y: (y + 1) * WIDTH]
-            print("".join("#" if pixel else "." for pixel in row))
+            print("".join("#" if pixel else " " for pixel in row))
     
     def run(self, steps: int) -> None:
         for _ in range(steps):
@@ -85,7 +97,7 @@ def main() -> None:
     ch8.load_rom("./logo.ch8")
     ch8.dump(ch8.PC, 100)
     try:
-        ch8.run(steps=10)
+        ch8.run(steps=100)
     except ValueError as e:
         print(e)
         
