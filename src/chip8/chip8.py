@@ -80,6 +80,8 @@ class Chip8:
                 self.V[ins.x] = ins.nn
             case 0x7:
                 self.V[ins.x] = (ins.nn + self.V[ins.x]) & 0xFF  
+            case 0x8:
+                self.alu(ins)
             # 9XY0
             case 0x9 if ins.n == 0x0:
                 if self.V[ins.x] != self.V[ins.y]:
@@ -101,7 +103,41 @@ class Chip8:
                         self.display[y * WIDTH + x] ^= bit
             case _:
                 opcode = (ins.kind << 12) | ins.nnn
-                raise ValueError(f"Unknown opcode: {opcode:04X}")
+                raise ValueError(f"Unknown opcode: {opcode:04x}")
+            
+    def alu(self, ins: Instruction) -> None:
+        vx, vy = self.V[ins.x], self.V[ins.y]
+        flag: int | None = None
+        match ins.n:
+            case 0x0:
+                result = vy
+            case 0x1:
+                result, flag = vx | vy, 0
+            case 0x2:
+                result, flag = vx & vy, 0
+            case 0x3:
+                result, flag = vx ^ vy, 0
+            case 0x4:
+                total = vx + vy
+                result, flag = total & 0xFF, int(total > 0xFF)           
+            case 0x5:
+                total = vx - vy
+                result, flag = total & 0xFF, int(vx >= vy)  
+            case 0x7:
+                total = vy - vx
+                result, flag = total & 0xFF, int(vy >= vx)
+            case 0x6:
+                result = vy >> 1
+                flag = vy & 1
+            case 0xE:
+                result = (vy << 1) & 0xFF
+                flag = vy >> 7
+            case _:
+                opcode = (ins.kind << 12) | ins.nnn
+                raise ValueError(f"Unknown opcode: {opcode:04x}")
+        self.V[ins.x] = result
+        if flag is not None:
+            self.V[0xF] = flag    
         
     def render(self) -> None:
         for y in range(HEIGHT):
