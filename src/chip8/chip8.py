@@ -23,6 +23,7 @@ class Chip8:
         self.PC = PROGRAM_START
         self.V = [0x0] * 16
         self.I = 0x0
+        self.stack: list[int] = []
         
     def load_rom(self, path: str) -> None:
         with open(path, 'rb') as file:
@@ -56,7 +57,12 @@ class Chip8:
         match ins.kind:
             case 0x0 if ins.nnn == 0x0E0:
                 self.display[:] = bytes(WIDTH * HEIGHT)
+            case 0x0 if ins.nnn == 0x0EE:
+                self.PC = self.stack.pop()
             case 0x1:
+                self.PC = ins.nnn
+            case 0x2:
+                self.stack.append(self.PC)
                 self.PC = ins.nnn
             # 3XNN
             case 0x3: 
