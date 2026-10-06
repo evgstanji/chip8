@@ -105,7 +105,7 @@ class Chip8:
                 self.misc(ins)
             case _:
                 opcode = (ins.kind << 12) | ins.nnn
-                raise ValueError(f"Unknown opcode: {opcode:04x}")
+                raise ValueError(f"Unknown opcode: {opcode:04X}")
             
     def misc(self, ins: Instruction) -> None:
         vx = self.V[ins.x]
@@ -119,14 +119,14 @@ class Chip8:
             case 0x55:
                 for i in range(ins.x + 1):
                     self.memory[self.I + i] = self.V[i]
-                self.I = ins.x + 1
+                self.I += ins.x + 1
             case 0x65:
                 for i in range(ins.x + 1):
                     self.V[i] = self.memory[self.I + i]
                 self.I += ins.x + 1
             case _:
                 opcode = (ins.kind << 12) | ins.nnn
-                raise ValueError(f"Unknown opcode: {opcode:04x}")
+                raise ValueError(f"Unknown opcode: {opcode:04X}")
             
     def alu(self, ins: Instruction) -> None:
         vx, vy = self.V[ins.x], self.V[ins.y]
@@ -157,7 +157,7 @@ class Chip8:
                 flag = vy >> 7
             case _:
                 opcode = (ins.kind << 12) | ins.nnn
-                raise ValueError(f"Unknown opcode: {opcode:04x}")
+                raise ValueError(f"Unknown opcode: {opcode:04X}")
         self.V[ins.x] = result
         if flag is not None:
             self.V[0xF] = flag    
