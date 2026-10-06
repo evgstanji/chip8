@@ -29,7 +29,7 @@ class Chip8:
         self.stack: list[int] = []
         self.delay_timer: int = 0
         self.sound_timer: int = 0
-        self.keys:list[bool] = [False] * NUMBER_KEYS
+        self.keys: list[bool] = [False] * NUMBER_KEYS
         
     def load_rom(self, path: str) -> None:
         with open(path, 'rb') as file:
@@ -101,6 +101,7 @@ class Chip8:
             case 0xD:
                 x0 = self.V[ins.x] % WIDTH      
                 y0 = self.V[ins.y] % HEIGHT
+                self.V[0xF] = 0
                 for row in range(ins.n):
                     sprite_byte = self.memory[self.I + row]           
                     for col in range(8):
@@ -108,13 +109,16 @@ class Chip8:
                         x = x0 + col
                         y = y0 + row
                         if x >= WIDTH or y >= HEIGHT:
-                            continue            
-                        self.display[y * WIDTH + x] ^= bit
+                            continue    
+                        index = y * WIDTH + x
+                        if bit and self.display[index]:
+                            self.V[0xF] = 1        
+                        self.display[index] ^= bit
             case 0xE if ins.nn == 0x9E:
-                if self.keys[self.V[ins.x]]:
+                if self.keys[self.V[ins.x] & 0xF]:
                     self.PC += OPCODE_SIZE
             case 0xE if ins.nn == 0xA1:
-                if not self.keys[self.V[ins.x]]:
+                if not self.keys[self.V[ins.x] & 0xF]:
                     self.PC += OPCODE_SIZE
             case 0xF if ins.nn in (0x07, 0x15, 0x18):
                 self.timer_ops(ins)
@@ -205,7 +209,6 @@ class Chip8:
             instruction = self.decode(opcode)
             self.execute(instruction)
         
-    
 def main() -> None:
     ch8 = Chip8()
     ch8.load_rom("./roms/Particle Demo [zeroZshadow, 2008].ch8")
