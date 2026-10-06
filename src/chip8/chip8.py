@@ -101,6 +101,29 @@ class Chip8:
                         if x >= WIDTH or y >= HEIGHT:
                             continue            
                         self.display[y * WIDTH + x] ^= bit
+            case 0xF:
+                self.misc(ins)
+            case _:
+                opcode = (ins.kind << 12) | ins.nnn
+                raise ValueError(f"Unknown opcode: {opcode:04x}")
+            
+    def misc(self, ins: Instruction) -> None:
+        vx = self.V[ins.x]
+        match ins.nn:
+            case 0x1E:
+                self.I = (self.I + vx) & 0xFFF
+            case 0x33:
+                self.memory[self.I] = vx // 100
+                self.memory[self.I + 1] = vx // 10 % 10
+                self.memory[self.I + 2] = vx % 10
+            case 0x55:
+                for i in range(ins.x + 1):
+                    self.memory[self.I + i] = self.V[i]
+                self.I = ins.x + 1
+            case 0x65:
+                for i in range(ins.x + 1):
+                    self.V[i] = self.memory[self.I + i]
+                self.I += ins.x + 1
             case _:
                 opcode = (ins.kind << 12) | ins.nnn
                 raise ValueError(f"Unknown opcode: {opcode:04x}")
