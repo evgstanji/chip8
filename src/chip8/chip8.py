@@ -102,12 +102,12 @@ class Chip8:
                             continue            
                         self.display[y * WIDTH + x] ^= bit
             case 0xF:
-                self.misc(ins)
+                self.memory_ops(ins)
             case _:
                 opcode = (ins.kind << 12) | ins.nnn
                 raise ValueError(f"Unknown opcode: {opcode:04X}")
             
-    def misc(self, ins: Instruction) -> None:
+    def memory_ops(self, ins: Instruction) -> None:
         vx = self.V[ins.x]
         match ins.nn:
             case 0x1E:
