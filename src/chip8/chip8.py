@@ -9,6 +9,8 @@ OPCODE_SIZE = 2
 HEIGHT = 32
 WIDTH = 64
 
+NUMBER_KEYS = 16
+
 class Instruction(NamedTuple):
     kind: int
     x: int
@@ -27,6 +29,7 @@ class Chip8:
         self.stack: list[int] = []
         self.delay_timer: int = 0
         self.sound_timer: int = 0
+        self.keys:list[bool] = [False] * NUMBER_KEYS
         
     def load_rom(self, path: str) -> None:
         with open(path, 'rb') as file:
@@ -107,6 +110,12 @@ class Chip8:
                         if x >= WIDTH or y >= HEIGHT:
                             continue            
                         self.display[y * WIDTH + x] ^= bit
+            case 0xE if ins.nn == 0x9E:
+                if self.keys[self.V[ins.x]]:
+                    self.PC += OPCODE_SIZE
+            case 0xE if ins.nn == 0xA1:
+                if not self.keys[self.V[ins.x]]:
+                    self.PC += OPCODE_SIZE
             case 0xF if ins.nn in (0x07, 0x15, 0x18):
                 self.timer_ops(ins)
             case 0xF:
