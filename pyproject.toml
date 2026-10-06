@@ -7,10 +7,13 @@ authors = [
     { name = "evgstanji"}
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "pygame-ce>=2.5.8",
+]
 
 [project.scripts]
 chip8 = "chip8.chip8:main"
+chip8-window = "chip8.window:main"
 
 [build-system]
 requires = ["uv_build>=0.12.17,<0.13.0"]
