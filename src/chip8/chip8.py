@@ -1,4 +1,5 @@
 from typing import NamedTuple
+import random
 
 PROGRAM_START = 0x200
 BYTES_PER_LINE = 16
@@ -88,7 +89,10 @@ class Chip8:
                     self.PC += OPCODE_SIZE
             case 0xA:
                 self.I = ins.nnn
-            #DXYN
+            # CXNN
+            case 0xC:
+                self.V[ins.x] = random.randint(0x0, 0xFF) & ins.nn
+            # DXYN
             case 0xD:
                 x0 = self.V[ins.x] % WIDTH      
                 y0 = self.V[ins.y] % HEIGHT
@@ -176,7 +180,7 @@ class Chip8:
     
 def main() -> None:
     ch8 = Chip8()
-    ch8.load_rom("./roms/3-corax+.ch8")
+    ch8.load_rom("./roms/Particle Demo [zeroZshadow, 2008].ch8")
     ch8.dump(ch8.PC, 100)
     try:
         ch8.run(steps=2000)
