@@ -34,6 +34,7 @@ def main() -> None:
             if event.type == pygame.QUIT:
                 running = False
         ch8.run(steps=INSTRUCTIONS_PER_FRAME)
+        ch8.tick_timers()
         draw(screen, ch8.display)
         pygame.display.flip()
         clock.tick(FPS)

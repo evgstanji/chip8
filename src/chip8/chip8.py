@@ -25,6 +25,8 @@ class Chip8:
         self.V = [0x0] * 16
         self.I = 0x0
         self.stack: list[int] = []
+        self.delay_timer: int = 0
+        self.sound_timer: int = 0
         
     def load_rom(self, path: str) -> None:
         with open(path, 'rb') as file:
@@ -105,11 +107,28 @@ class Chip8:
                         if x >= WIDTH or y >= HEIGHT:
                             continue            
                         self.display[y * WIDTH + x] ^= bit
+            case 0xF if ins.nn in (0x07, 0x15, 0x18):
+                self.timer_ops(ins)
             case 0xF:
                 self.memory_ops(ins)
             case _:
                 opcode = (ins.kind << 12) | ins.nnn
                 raise ValueError(f"Unknown opcode: {opcode:04X}")
+            
+    def tick_timers(self) -> None:
+        if self.delay_timer > 0:
+            self.delay_timer -= 1
+        if self.sound_timer > 0:
+            self.sound_timer -= 1
+            
+    def timer_ops(self, ins: Instruction) -> None:
+        match ins.nn:
+            case 0x07:
+                self.V[ins.x] = self.delay_timer
+            case 0x15:
+                self.delay_timer = self.V[ins.x]
+            case 0x18:
+                self.sound_timer = self.V[ins.x]
             
     def memory_ops(self, ins: Instruction) -> None:
         vx = self.V[ins.x]
@@ -183,7 +202,7 @@ def main() -> None:
     ch8.load_rom("./roms/Particle Demo [zeroZshadow, 2008].ch8")
     ch8.dump(ch8.PC, 100)
     try:
-        ch8.run(steps=2000)
+        ch8.run(steps=200)
     except ValueError as e:
         print(e)
         
