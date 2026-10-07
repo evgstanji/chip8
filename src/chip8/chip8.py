@@ -168,6 +168,13 @@ class Chip8:
     def memory_ops(self, ins: Instruction) -> None:
         vx = self.V[ins.x]
         match ins.nn:
+            # FX0A "Press any key" instruction
+            case 0x0A:
+                for key in range(NUMBER_KEYS):
+                    if self.keys[key]:
+                        self.V[ins.x] = key
+                        return
+                self.PC -= OPCODE_SIZE
             case 0x1E:
                 self.I = (self.I + vx) & 0xFFF
             case 0x29:
