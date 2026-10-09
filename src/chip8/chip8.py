@@ -41,7 +41,11 @@ class Instruction(NamedTuple):
     nnn: int
 
 class Chip8:
-    def __init__(self) -> None:
+    def __init__(self, chip48_mode: bool = False) -> None:
+        
+        # shift quirk: CHIP-8 shifts VY into VX, CHIP-48 shifts VX itself
+        self.chip48_mode = chip48_mode
+        
         self.display = bytearray(WIDTH * HEIGHT)
         self.memory = bytearray(4096)
         self.memory[FONT_START: FONT_START + len(FONT)] = FONT
@@ -217,11 +221,13 @@ class Chip8:
                 total = vy - vx
                 result, flag = total & 0xFF, int(vy >= vx)
             case 0x6:
-                result = vy >> 1
-                flag = vy & 1
+                source = vx if self.chip48_mode else vy
+                result = source >> 1
+                flag = source & 1
             case 0xE:
-                result = (vy << 1) & 0xFF
-                flag = vy >> 7
+                source = vx if self.chip48_mode else vy
+                result = (source << 1) & 0xFF
+                flag = source >> 7
             case _:
                 opcode = (ins.kind << 12) | ins.nnn
                 raise ValueError(f"Unknown opcode: {opcode:04X}")

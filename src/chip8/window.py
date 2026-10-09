@@ -29,8 +29,12 @@ def draw(screen: pygame.Surface, display: bytearray) -> None:
     
     
 def main() -> None:
-    ch8 = Chip8()
-    ch8.load_rom(sys.argv[1])
+    
+    chip48_mode = "--chip48" in sys.argv
+    rom_path = sys.argv[-1]
+    
+    ch8 = Chip8(chip48_mode=chip48_mode)
+    ch8.load_rom(rom_path)
     pygame.init()
     screen = pygame.display.set_mode((WIDTH * SCALE, HEIGHT * SCALE))
     clock = pygame.time.Clock()
