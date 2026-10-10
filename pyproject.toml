@@ -1,7 +1,7 @@
 [project]
 name = "chip8"
 version = "0.1.0"
-description = "Add your description here"
+description = "CHIP-8 interpreter in Python with a CHIP-48 mode"
 readme = "README.md"
 authors = [
     { name = "evgstanji"}
