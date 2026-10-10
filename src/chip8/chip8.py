@@ -42,10 +42,10 @@ class Instruction(NamedTuple):
 
 class Chip8:
     def __init__(self, chip48_mode: bool = False) -> None:
-        
+
         # shift quirk: CHIP-8 shifts VY into VX, CHIP-48 shifts VX itself
         self.chip48_mode = chip48_mode
-        
+
         self.display = bytearray(WIDTH * HEIGHT)
         self.memory = bytearray(4096)
         self.memory[FONT_START: FONT_START + len(FONT)] = FONT
@@ -56,25 +56,25 @@ class Chip8:
         self.delay_timer: int = 0
         self.sound_timer: int = 0
         self.keys: list[bool] = [False] * NUMBER_KEYS
-        
+
     def load_rom(self, path: str) -> None:
         with open(path, 'rb') as file:
             data = file.read()
         self.memory[PROGRAM_START: PROGRAM_START + len(data)] = data
-    
+
     def dump(self, start: int, count: int) -> None:
         for addr in range(start, start + count, BYTES_PER_LINE):
             row = self.memory[addr : addr + BYTES_PER_LINE]
             hex_line = " ".join(f"{byte:02X}" for byte in row)
             print(f"{addr:04X}: {hex_line}")
-            
+
     def fetch(self) -> int:
-        hi = self.memory[self.PC] 
+        hi = self.memory[self.PC]
         lo = self.memory[self.PC + 1]
         opcode = (hi << 8) | lo
         self.PC += OPCODE_SIZE
         return opcode
-    
+
     def decode(self, opcode: int) -> Instruction:
         return Instruction(
             kind=(opcode >> 12),
@@ -84,7 +84,7 @@ class Chip8:
             nn=opcode & 0xFF,
             nnn=opcode & 0xFFF,
         )
-    
+
     def execute(self, ins: Instruction) -> None:
         match ins.kind:
             case 0x0 if ins.nnn == 0x0E0:
@@ -97,7 +97,7 @@ class Chip8:
                 self.stack.append(self.PC)
                 self.PC = ins.nnn
             # 3XNN
-            case 0x3: 
+            case 0x3:
                 if self.V[ins.x] == ins.nn:
                     self.PC += OPCODE_SIZE
             # 4XNN
@@ -111,7 +111,7 @@ class Chip8:
             case 0x6:
                 self.V[ins.x] = ins.nn
             case 0x7:
-                self.V[ins.x] = (ins.nn + self.V[ins.x]) & 0xFF  
+                self.V[ins.x] = (ins.nn + self.V[ins.x]) & 0xFF
             case 0x8:
                 self.alu(ins)
             # 9XY0
@@ -120,25 +120,31 @@ class Chip8:
                     self.PC += OPCODE_SIZE
             case 0xA:
                 self.I = ins.nnn
+            case 0xB:
+                if self.chip48_mode:
+                    self.PC = ins.nnn + self.V[ins.x]
+                else:
+                    self.PC = ins.nnn + self.V[0x0]
+                
             # CXNN
             case 0xC:
                 self.V[ins.x] = random.randint(0x0, 0xFF) & ins.nn
             # DXYN
             case 0xD:
-                x0 = self.V[ins.x] % WIDTH      
+                x0 = self.V[ins.x] % WIDTH
                 y0 = self.V[ins.y] % HEIGHT
                 self.V[0xF] = 0
                 for row in range(ins.n):
-                    sprite_byte = self.memory[self.I + row]           
+                    sprite_byte = self.memory[self.I + row]
                     for col in range(8):
-                        bit = (sprite_byte >> (7 - col)) & 1               
+                        bit = (sprite_byte >> (7 - col)) & 1
                         x = x0 + col
                         y = y0 + row
                         if x >= WIDTH or y >= HEIGHT:
-                            continue    
+                            continue
                         index = y * WIDTH + x
                         if bit and self.display[index]:
-                            self.V[0xF] = 1        
+                            self.V[0xF] = 1
                         self.display[index] ^= bit
             case 0xE if ins.nn == 0x9E:
                 if self.keys[self.V[ins.x] & 0xF]:
@@ -153,13 +159,13 @@ class Chip8:
             case _:
                 opcode = (ins.kind << 12) | ins.nnn
                 raise ValueError(f"Unknown opcode: {opcode:04X}")
-            
+
     def tick_timers(self) -> None:
         if self.delay_timer > 0:
             self.delay_timer -= 1
         if self.sound_timer > 0:
             self.sound_timer -= 1
-            
+
     def timer_ops(self, ins: Instruction) -> None:
         match ins.nn:
             case 0x07:
@@ -168,7 +174,7 @@ class Chip8:
                 self.delay_timer = self.V[ins.x]
             case 0x18:
                 self.sound_timer = self.V[ins.x]
-            
+
     def memory_ops(self, ins: Instruction) -> None:
         vx = self.V[ins.x]
         match ins.nn:
@@ -198,7 +204,7 @@ class Chip8:
             case _:
                 opcode = (ins.kind << 12) | ins.nnn
                 raise ValueError(f"Unknown opcode: {opcode:04X}")
-            
+
     def alu(self, ins: Instruction) -> None:
         vx, vy = self.V[ins.x], self.V[ins.y]
         flag: int | None = None
@@ -213,10 +219,10 @@ class Chip8:
                 result, flag = vx ^ vy, 0
             case 0x4:
                 total = vx + vy
-                result, flag = total & 0xFF, int(total > 0xFF)           
+                result, flag = total & 0xFF, int(total > 0xFF)
             case 0x5:
                 total = vx - vy
-                result, flag = total & 0xFF, int(vx >= vy)  
+                result, flag = total & 0xFF, int(vx >= vy)
             case 0x7:
                 total = vy - vx
                 result, flag = total & 0xFF, int(vy >= vx)
@@ -233,19 +239,19 @@ class Chip8:
                 raise ValueError(f"Unknown opcode: {opcode:04X}")
         self.V[ins.x] = result
         if flag is not None:
-            self.V[0xF] = flag    
-        
+            self.V[0xF] = flag
+
     def render(self) -> None:
         for y in range(HEIGHT):
             row = self.display[WIDTH * y: (y + 1) * WIDTH]
             print("".join("#" if pixel else " " for pixel in row))
-    
+
     def run(self, steps: int) -> None:
         for _ in range(steps):
             opcode = self.fetch()
             instruction = self.decode(opcode)
             self.execute(instruction)
-        
+
 def main() -> None:
     ch8 = Chip8()
     ch8.load_rom("./roms/Particle Demo [zeroZshadow, 2008].ch8")
@@ -254,12 +260,12 @@ def main() -> None:
         ch8.run(steps=200)
     except ValueError as e:
         print(e)
-        
+
     for i, v in enumerate(ch8.V):
         print(f"V{i:X}={v:02X}", end=" ")
     print(f"I={ch8.I:04X} PC={ch8.PC:04X}")
-    
+
     ch8.render()
-    
+
 if __name__ == "__main__":
     main()
