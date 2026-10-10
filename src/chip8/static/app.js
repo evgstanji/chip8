@@ -14,6 +14,6 @@ function draw(pixels) {
   });
 }
 
-fetch("/frame")
-  .then((response) => response.json())
-  .then(draw);
+const socket = new WebSocket(`ws://${location.host}/ws`);
+socket.binaryType = "arraybuffer";
+socket.onmessage = (event) => draw(new Uint8Array(event.data));
